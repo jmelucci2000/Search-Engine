@@ -1,19 +1,20 @@
 from bs4 import BeautifulSoup
 import os
 import json
-
+import re
 #   Steps to Complete
 # 1: Calculate/fetch the tokens from each doc
 # 2: Create Inverted Index using these tokens
 
 class Posting:
     def __init__(self, doc_id, freq):
-        this.doc_id = doc_id
-        this.freq = freq
+        self.doc_id = doc_id
+        self.freq = freq
     def get_docid(self):
-        return this.doc_id
+        return self.doc_id
     def get_freq(self):
-        return this.freq
+        return self.freq
+
 
 # Call this function to add a document's text to inverted index
 # doc = json file representing doc
@@ -60,8 +61,7 @@ def getListOfFiles(cur_dir):
 
 if __name__ == '__main__':
     # get list of all files in a folder
-    files = getListOfFiles('\DEV')
-    print(files)
+    files = getListOfFiles('DEV')
     # inverted index: key = token; value = list of postings
     inv_index = {}
     # iterate through the docs (in json)
@@ -73,11 +73,32 @@ if __name__ == '__main__':
         addtoInvertedIndex(tokenfreqdict, i, inv_index)
         i += 1
         cur_doc.close()
+        print("{")
+        for token in inv_index:
+            text = "'" + token +"' : "
+            print(text)
+            text = ""
+            for posting in inv_index[token]:
+                    text +="[" + str(posting.doc_id) + "," + str(posting.freq) + "] "
+            print(text)
+        print("}")
+
 
     # number of unique words, number of indexed documents, and total size (in KB) of index on disk
     print(len(inv_index))
     print(i-1)
     inv_index_file = open('result.txt', 'w')
-    inv_index_file.write(json.dumps(inv_index))
+    inv_index_file.write("{")
+    for token in inv_index:
+        text = "'" + token +"' : "
+        inv_index_file.write(text)
+        text = ""
+        for posting in inv_index[token]:
+                text += posting.doc_id + "," + posting.freq
+        inv_index_file.write(text)
+    inv_index_file.write("}")
+            
+
+
 
     
