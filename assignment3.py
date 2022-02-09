@@ -13,14 +13,6 @@ class Posting:
     def get_freq(self):
         return this.freq
 
-# inverted index: key = token; value = list of postings
-inv_index = {}
-# iterate through the docs
-for i, doc in enumerate(docs):
-    tokens = tokenizeDoc(doc)
-    tokenfreqdict = computeWordFrequencies(tokens)
-    addtoInvertedIndex(tokenfreqdict, i, inv_index)
-
 # Call this function to add a document's text to inverted index
 # doc = json file representing doc
 # docid = integer representing the document id
@@ -50,3 +42,12 @@ def addtoInvertedIndex(tokenfreqdict, doc_id, inv_index):
             inv_index[token].append(p)
         else:
             inv_index[token] = [p]
+
+if __name__ == '__main__':
+    # inverted index: key = token; value = list of postings
+    inv_index = {}
+    # iterate through the docs
+    for i, doc in enumerate(docs):
+        tokens = tokenizeDoc(doc)
+        tokenfreqdict = computeWordFrequencies(tokens)
+        addtoInvertedIndex(tokenfreqdict, i, inv_index)
