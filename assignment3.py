@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup
+import os
+import json
 
 #   Steps to Complete
 # 1: Calculate/fetch the tokens from each doc
@@ -18,7 +20,8 @@ class Posting:
 # docid = integer representing the document id
 def tokenizeDoc(doc):
     # might need to change doc later so that it is proper type for BeautifulSoup
-    soup = BeautifulSoup(doc, "html.parser")
+    data = json.load(doc)
+    soup = BeautifulSoup(data['content'], "html.parser")
     text = soup.get_text()
     text = re.sub(r'[^a-zA-Z0-9 \n]', ' ', text)
     text = text.lower()
@@ -43,11 +46,38 @@ def addtoInvertedIndex(tokenfreqdict, doc_id, inv_index):
         else:
             inv_index[token] = [p]
 
+# retrieves list of all files within a directory (including subdirectories)
+def getListOfFiles(cur_dir):
+    files = []
+    ls = os.listdir(cur_dir)
+    for f in ls:
+        path = os.path.join(cur_dir, f)
+        if os.path.isdir(path):
+            files = files + getListOfFiles(path)
+        else:
+            files.append(path)
+    return files
+
 if __name__ == '__main__':
+    # get list of all files in a folder
+    files = getListOfFiles('\DEV')
+    print(files)
     # inverted index: key = token; value = list of postings
     inv_index = {}
-    # iterate through the docs
-    for i, doc in enumerate(docs):
-        tokens = tokenizeDoc(doc)
+    # iterate through the docs (in json)
+    i = 1
+    for doc in files:
+        cur_doc = open(doc, 'r')
+        tokens = tokenizeDoc(cur_doc)
         tokenfreqdict = computeWordFrequencies(tokens)
         addtoInvertedIndex(tokenfreqdict, i, inv_index)
+        i += 1
+        cur_doc.close()
+
+    # number of unique words, number of indexed documents, and total size (in KB) of index on disk
+    print(len(inv_index))
+    print(i-1)
+    inv_index_file = open('result.txt', 'w')
+    inv_index_file.write(json.dumps(inv_index))
+
+    
