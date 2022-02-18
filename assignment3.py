@@ -1,3 +1,5 @@
+# Joseph Melucci 14795164, Raymond Anggono 93379391, Andrew Tian 66931790
+
 from bs4 import BeautifulSoup
 import os
 import json
