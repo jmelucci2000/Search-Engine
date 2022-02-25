@@ -1,65 +1,11 @@
 # Joseph Melucci 14795164, Raymond Anggono 93379391, Andrew Tian 66931790
 
+from indexcreation import Posting
+import indexcreation
 from bs4 import BeautifulSoup
 import os
 import json
 import re
-
-class Posting:
-    def __init__(self, doc_id, freq):
-        self.doc_id = doc_id
-        self.freq = freq
-    def get_docid(self):
-        return self.doc_id
-    def get_freq(self):
-        return self.freq
-    def __str__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.freq) + ')'
-    def __repr__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.freq) + ')'
-
-
-# Call this function to add a document's text to inverted index
-# doc = json file representing doc
-# docid = integer representing the document id
-def tokenizeDoc(doc_data):
-    # might need to change doc later so that it is proper type for BeautifulSoup
-    soup = BeautifulSoup(doc_data['content'], "html.parser")
-    text = soup.get_text()
-    text = re.sub(r'[^a-zA-Z0-9 \n]', ' ', text)
-    text = text.lower()
-    tokens = text.split()
-    return tokens
-
-def computeWordFrequencies(tokenList):
-    # create a dict, iterate through each token in tokenlist and add it to the dict
-    ans = dict()
-    for token in tokenList:
-        if token in ans:
-            ans[token] += 1
-        else:
-            ans[token] = 1
-    return ans
-
-def addtoInvertedIndex(tokenfreqdict, doc_id, inv_index):
-    for token in tokenfreqdict:
-        p = Posting(doc_id, tokenfreqdict[token])
-        if token in inv_index:
-            inv_index[token].append(p)
-        else:
-            inv_index[token] = [p]
-
-# retrieves list of all files within a directory (including subdirectories)
-def getListOfFiles(cur_dir):
-    files = []
-    ls = os.listdir(cur_dir)
-    for f in ls:
-        path = os.path.join(cur_dir, f)
-        if os.path.isdir(path):
-            files = files + getListOfFiles(path)
-        else:
-            files.append(path)
-    return files
 
 # Retrieves a postings list for a token
 def get_Postings(token):
@@ -98,27 +44,16 @@ def set_and_Query(s, p):
             si += 1
     return r
 
-if __name__ == '__main__':
-    # get list of all files in a folder
-    files = getListOfFiles('DEV')
-    # inverted index: key = token; value = list of postings
-    inv_index = {}
-    # iterate through the docs (in json)
-    url_map = {}
-    i = 1
-    for doc in files:
-        cur_doc = open(doc, 'r')
-        data = json.load(cur_doc)
-        tokens = tokenizeDoc(data)
-        tokenfreqdict = computeWordFrequencies(tokens)
-        addtoInvertedIndex(tokenfreqdict, i, inv_index)
-        url_map[i] = data['url']
-        i += 1
-        cur_doc.close()
+def loadIndex():
+    
 
-#    inv_index_file = open('result.txt', 'w')
-#    inv_index_file.write(str(inv_index))
-#    inv_index_file.close()
+if __name__ == '__main__':
+    
+    # update or create inverted index
+    indexcreation.createIndex()
+    
+    inv_index = loadIndex()
+
 
 
     # Ask user for queries
