@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import os
 import json
 import re
+from nltk import PorterStemmer
 
 class Posting:
     def __init__(self, doc_id, freq):
