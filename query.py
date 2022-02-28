@@ -9,8 +9,25 @@ import re
 from nltk import PorterStemmer
 
 # Retrieves a postings list for a token
-def get_Postings(token):
-    return inv_index[token]
+def get_Postings(bk_dict, token, inv_index_f):
+    if token[0] in bk_dict:
+        inv_index_f.seek(bk_dict[token[0]])
+        line = inv_index_f.readline()
+        while line:
+            curtok, postings = line.split(':')
+            if token == curtok:
+                postlist = eval(postings[:-1])
+                newpostlist = []
+                for doc_id, freq in postlist:
+                    p = Posting(doc_id, freq, 0, 0)
+                    newpostlist += [p]
+                return newpostlist
+            elif token < curtok:
+                return []
+            else:
+                line = inv_index_f.readline()
+        return []
+
 
 # Returns a set of valid documents from an AND Query
 def and_Query(p1, p2):
@@ -45,17 +62,28 @@ def set_and_Query(s, p):
             si += 1
     return r
 
-def loadIndex():
-    
+# load bookkeeping dict into memory
+def loadBookkeeping():
+    bk_file = open('bk.txt', 'r')
+    return eval(bk_file.readline())
+
+# load url map into memory
+def loadUrlmap():
+    uf = open('urlmap.txt', 'r')
+    url_map = {}
+    for line in uf:
+        sline = line.split(' ')
+        url_map[(int)(sline[0])] = sline[1][:-1]
+    return url_map
 
 if __name__ == '__main__':
     
     # update or create inverted index
-    indexcreation.createIndex()
+    #indexcreation.createIndex()
     
-    inv_index = loadIndex()
-
-
+    bk_dict = loadBookkeeping()
+    inv_index_f = open('invertedindex.txt', 'r')
+    url_map = loadUrlmap()
 
     # Ask user for queries
     while True:
@@ -66,25 +94,20 @@ if __name__ == '__main__':
         valid_documents = set()
         i = 1
         if len(tokens) == 1:
-            if tokens[0] in inv_index:
-                for posting in get_Postings(tokens[0]):
-                    valid_documents.add(posting.doc_id)
+            postings = get_Postings(bk_dict, tokens[0], inv_index_f)
+            for posting in postings:
+                valid_documents.add(posting.doc_id)
         while i < len(tokens):
             if i == 1:
-                p1 = []
-                p2 = []
-                if tokens[0] in inv_index:
-                    p1 = get_Postings(tokens[0])
-                if tokens[1] in inv_index:
-                    p2 = get_Postings(tokens[1])
+                p1 = get_Postings(bk_dict, tokens[0], inv_index_f)
+                p2 = get_Postings(bk_dict, tokens[1], inv_index_f)
                 valid_documents = and_Query(p1, p2)
                 i += 1
             else:
                 if len(valid_documents) < 1:
                     break
                 p = []
-                if tokens[i] in inv_index:
-                    p = get_Postings(tokens[i])
+                p = get_Postings(bk_dict, tokens[i], inv_index_f)
                 valid_documents = set_and_Query(valid_documents, p)
                 i += 1
 
