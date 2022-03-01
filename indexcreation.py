@@ -6,19 +6,14 @@ from nltk import PorterStemmer
 import math
 
 class Posting:
-    def __init__(self, doc_id, freq,tf, pos):
+    def __init__(self, doc_id, tf, sf):
         self.doc_id = doc_id
-        self.freq = freq
         self.tf = tf
-        self.pos = pos
-    def get_docid(self):
-        return self.doc_id
-    def get_freq(self):
-        return self.freq
+        self.sf = sf
     def __str__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.freq) +',' + str(self.tf)+ ',' + str(self.pos) + ')'
+        return 'Posting(' + str(self.doc_id) + ', ' + str(self.tf) + ', ' + str(self.sf) + ')'
     def __repr__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.freq) +',' + str(self.tf)+ ','+ str(self.pos) + ')'
+        return 'Posting(' + str(self.doc_id) + ', ' + str(self.tf) + ', ' + str(self.sf) + ')'
 
 
 # Call this function to add a document's text to inverted index
@@ -38,17 +33,12 @@ def tokenize(text):
 def processWordInformation(tokenList):
     # create a dict, iterate through each token in tokenlist and add it to the dict
     freq = dict()
-    positions = dict()
-    i = 0
     for token in tokenList:
         if token in freq:
             freq[token] += 1
-            positions[token].append(i)
         else:
             freq[token] = 1
-            positions[token] = [i]
-        i+=1
-    return freq, positions
+    return freq
 
 def getTf(significantTokens,tokenFreq,significantFreq):
     tfScores = {}
@@ -62,9 +52,12 @@ def getTf(significantTokens,tokenFreq,significantFreq):
         tfScores[token] = tf
     return tfScores
 
-def addtoInvertedIndex(tokenFreq, doc_id, inv_index, positions, tfScores):
+def addtoInvertedIndex(tokenFreq, doc_id, inv_index, sig_freq):
     for token in tokenFreq:
-        p = Posting(doc_id, tokenFreq[token], tfScores[token], positions[token])
+        if token in sig_freq:
+            p = Posting(doc_id, tokenFreq[token], sig_freq[token])
+        else:
+            p = Posting(doc_id, tokenFreq[token], 0)
         if token in inv_index:
             inv_index[token].append(p)
         else:
@@ -164,7 +157,7 @@ def createIndex():
         tokens = tokenize(text)
 
         # Find the corresponding token frequencies and position
-        tokenFreq, tokenPos = processWordInformation(tokens)
+        tokenFreq = processWordInformation(tokens)
 
         # Find the more significant words
         significantTags = ["title","strong","b", "h1", "h2", "h3"]
@@ -172,13 +165,13 @@ def createIndex():
         for words in soup.findAll(significantTags):
             significantText += " " + words.text.strip()
         significantToken = tokenize(significantText)
-        significantFreq,significantPos = processWordInformation(significantToken)
+        significantFreq = processWordInformation(significantToken)
 
         # Find the tf scores of each token
-        tfScores = getTf(significantToken, tokenFreq,significantFreq)
+        # tfScores = getTf(significantToken, tokenFreq,significantFreq)
 
 
-        addtoInvertedIndex(tokenFreq, i, inv_index, tokenPos, tfScores)
+        addtoInvertedIndex(tokenFreq, i, inv_index, significantFreq)
         
         url_map[i] = data['url']
         cur_doc.close()

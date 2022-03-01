@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import os
 import json
 import re
+import math
 from nltk import PorterStemmer
 
 # Retrieves a postings list for a token
@@ -18,8 +19,8 @@ def get_Postings(bk_dict, token, inv_index_f):
             if token == curtok:
                 postlist = eval(postings[:-1])
                 newpostlist = []
-                for doc_id, freq in postlist:
-                    p = Posting(doc_id, freq, 0, 0)
+                for doc_id, freq, sf in postlist:
+                    p = Posting(doc_id, freq, sf)
                     newpostlist += [p]
                 return newpostlist
             elif token < curtok:
@@ -28,6 +29,13 @@ def get_Postings(bk_dict, token, inv_index_f):
                 line = inv_index_f.readline()
         return []
 
+def get_tfidf(posting, df, corpuslen):
+    idf = math.log10(corpuslen / df)
+    if posting.sf != 0:
+        tf_weight = 2 + math.log10(posting.tf) + math.log10(posting.sf)
+    else:
+        tf_weight = 1 + math.log10(posting.tf)
+    return tf_weight*idf
 
 # Returns a set of valid documents from an AND Query
 def and_Query(p1, p2):
@@ -76,6 +84,9 @@ def loadUrlmap():
         url_map[(int)(sline[0])] = sline[1][:-1]
     return url_map
 
+# def cosineScore(query_tokens):
+
+
 if __name__ == '__main__':
     
     # update or create inverted index
@@ -88,36 +99,43 @@ if __name__ == '__main__':
     # Ask user for queries
     while True:
         query = input('Enter a query: ')
-        tokens = query.lower().split()
+        tokens = indexcreation.tokenize(query)
         # do we process tokens in user queries ? (i.e. stemming)
         # retrieve postings lists of each token and do an AND query for them
-        valid_documents = set()
-        i = 1
-        if len(tokens) == 1:
-            postings = get_Postings(bk_dict, tokens[0], inv_index_f)
-            for posting in postings:
-                valid_documents.add(posting.doc_id)
-        while i < len(tokens):
-            if i == 1:
-                p1 = get_Postings(bk_dict, tokens[0], inv_index_f)
-                p2 = get_Postings(bk_dict, tokens[1], inv_index_f)
-                valid_documents = and_Query(p1, p2)
-                i += 1
-            else:
-                if len(valid_documents) < 1:
-                    break
-                p = []
-                p = get_Postings(bk_dict, tokens[i], inv_index_f)
-                valid_documents = set_and_Query(valid_documents, p)
-                i += 1
+        
+        postings_lists = []
+        for token in tokens:
+            postings_lists.append(get_Postings(bk_dict, token, inv_index_f))
 
-        # Show first 5 results from valid_postings (haven't done ranking yet)
-        valid_documents = list(valid_documents)
-        if len(valid_documents) < 1:
-            print("No matching documents.")
-        for j in range(len(valid_documents)):
-            if j < 5:
-                print(url_map[valid_documents[j]])
+        
+
+        # valid_documents = set()
+        # i = 1
+        # if len(tokens) == 1:
+        #     postings = get_Postings(bk_dict, tokens[0], inv_index_f)
+        #     for posting in postings:
+        #         valid_documents.add(posting.doc_id)
+        # while i < len(tokens):
+        #     if i == 1:
+        #         p1 = get_Postings(bk_dict, tokens[0], inv_index_f)
+        #         p2 = get_Postings(bk_dict, tokens[1], inv_index_f)
+        #         valid_documents = and_Query(p1, p2)
+        #         i += 1
+        #     else:
+        #         if len(valid_documents) < 1:
+        #             break
+        #         p = []
+        #         p = get_Postings(bk_dict, tokens[i], inv_index_f)
+        #         valid_documents = set_and_Query(valid_documents, p)
+        #         i += 1
+
+        # # Show first 5 results from valid_postings (haven't done ranking yet)
+        # valid_documents = list(valid_documents)
+        # if len(valid_documents) < 1:
+        #     print("No matching documents.")
+        # for j in range(len(valid_documents)):
+        #     if j < 5:
+        #         print(url_map[valid_documents[j]])
 
             
 
