@@ -6,14 +6,13 @@ from nltk import PorterStemmer
 import math
 
 class Posting:
-    def __init__(self, doc_id, tf, sf):
+    def __init__(self, doc_id, ns):
         self.doc_id = doc_id
-        self.tf = tf
-        self.sf = sf
+        self.ns = ns
     def __str__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.tf) + ', ' + str(self.sf) + ')'
+        return 'Posting(' + str(self.doc_id) + ', ' + str(self.ns) + ')'
     def __repr__(self):
-        return 'Posting(' + str(self.doc_id) + ', ' + str(self.tf) + ', ' + str(self.sf) + ')'
+        return 'Posting(' + str(self.doc_id) + ', ' + str(self.ns) + ')'
 
 
 # Call this function to add a document's text to inverted index
@@ -27,7 +26,6 @@ def tokenize(text):
     
     for t in text:
         token.append(ps.stem(t))
-        
     return token
 
 def processWordInformation(tokenList):
@@ -52,16 +50,37 @@ def getTf(significantTokens,tokenFreq,significantFreq):
         tfScores[token] = tf
     return tfScores
 
-def addtoInvertedIndex(tokenFreq, doc_id, inv_index, sig_freq):
-    for token in tokenFreq:
-        if token in sig_freq:
-            p = Posting(doc_id, tokenFreq[token], sig_freq[token])
-        else:
-            p = Posting(doc_id, tokenFreq[token], 0)
+def getNormalize(tfScores):
+    normalized_scores = {}
+    total_sum = 0
+    for token in tfScores:
+        total_sum += (tfScores[token]**2)
+
+    doc_length = math.sqrt(total_sum)
+    for token in tfScores:
+        normalized_scores[token] = round(tfScores[token] / doc_length, 3)
+
+    return normalized_scores
+
+# def addtoInvertedIndex(tokenFreq, doc_id, inv_index, sig_freq):
+#     for token in tokenFreq:
+#         if token in sig_freq:
+#             p = Posting(doc_id, tokenFreq[token], sig_freq[token])
+#         else:
+#             p = Posting(doc_id, tokenFreq[token], 0)
+#         if token in inv_index:
+#             inv_index[token].append(p)
+#         else:
+#             inv_index[token] = [p]
+
+def addtoInvertedIndex(doc_id, inv_index, normalize_score):
+    for token in normalize_score:
+        p = Posting(doc_id,normalize_score[token])
         if token in inv_index:
             inv_index[token].append(p)
         else:
             inv_index[token] = [p]
+
 
 # retrieves list of all files within a directory (including subdirectories)
 def getListOfFiles(cur_dir):
@@ -85,7 +104,7 @@ def writePartialIndex(inv_index, n):
     for tok in sorted(inv_index):
         lstr = tok + ":["
         for posting in inv_index[tok]:
-            lstr += "(" + str(posting.doc_id) + "," + str(posting.freq) + "),"
+            lstr += "(" + str(posting.doc_id) + "," + str(posting.ns) + "),"
         lstr = lstr[:-1] + "]\n"
         f.write(lstr)
 
@@ -166,12 +185,16 @@ def createIndex():
             significantText += " " + words.text.strip()
         significantToken = tokenize(significantText)
         significantFreq = processWordInformation(significantToken)
-
-        # Find the tf scores of each token
-        # tfScores = getTf(significantToken, tokenFreq,significantFreq)
-
-
-        addtoInvertedIndex(tokenFreq, i, inv_index, significantFreq)
+        
+        
+        # Find the normalize of each token in the document
+        tf_scores = getTf(significantToken, tokenFreq,significantFreq)
+        normalize_scores = getNormalize(tf_scores)
+        addtoInvertedIndex(i,inv_index,normalize_scores)
+        
+        
+        # Our First Try
+        # addtoInvertedIndex(tokenFreq, i, inv_index, significantFreq)
         
         url_map[i] = data['url']
         cur_doc.close()
