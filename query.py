@@ -25,14 +25,6 @@ def get_Postings(bk_dict, token, inv_index_f):
                 line = inv_index_f.readline()
         return []
 
-#def get_tfidf(posting, df, corpuslen):
-#    idf = math.log10(corpuslen / df)
-#    if posting.sf != 0:
-#        tf_weight = 2 + math.log10(posting.tf) + math.log10(posting.sf)
-#    else:
-#        tf_weight = 1 + math.log10(posting.tf)
-#    return tf_weight*idf
-
 # Returns a set of valid documents from an AND Query
 def and_Query(p1, p2):
     p1i = 0
@@ -123,7 +115,6 @@ if __name__ == '__main__':
         query_normalized = indexcreation.getNormalize(query_scores)
         
         # for each document that has at least one query term, compute score using cosine similarity
-
         # document_scores = {doc_id:score}
         document_scores = {}
         for token in postings_lists:
@@ -134,13 +125,15 @@ if __name__ == '__main__':
                     document_scores[posting.doc_id] += (document_normalize*query_normalized[token])
                 else:
                     document_scores[posting.doc_id] = document_normalize*query_normalized[token]
-        
+
         # sort document_scores by value and return top k results 
         sdoc_scores = sorted(document_scores.items(), key = lambda d: d[1], reverse=True)
         sdoc_scores = sdoc_scores[:numberOfLink]
 
         end_time = time.perf_counter()
+
         print(f"Query time: {end_time-start_time:0.4f} seconds")
+
         for doc_id, score in sdoc_scores:
             print(url_map[doc_id])
 
