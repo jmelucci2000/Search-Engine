@@ -4,6 +4,7 @@ from indexcreation import Posting
 import indexcreation
 import math
 import time
+from nltk import PorterStemmer
 
 # Retrieves a postings list for a token
 def get_Postings(bk_dict, token, inv_index_f):
@@ -73,7 +74,9 @@ def loadUrlmap():
     return url_map
 
 def getIdf(df, n):
-    return math.log10(n/df)
+    if df > 0:
+        return math.log10(n/df)
+    return 0.0
 
 def getTfIdf(freq, idf):
     tf = 1 + math.log10(freq)
@@ -82,26 +85,38 @@ def getTfIdf(freq, idf):
 if __name__ == '__main__':
     
     # update or create inverted index
-    # indexcreation.createIndex()
+    indexcreation.createIndex()
     
     bk_dict = loadBookkeeping()
     inv_index_f = open('invertedindex.txt', 'r')
     url_map = loadUrlmap()
+    with open("stopwords.txt", "r") as file:
+            sw = [line.rstrip('\n') for line in file]
+    file.close()
+    sw = {'hadn', 'she', 'aren', 'and', 't', 'am', 'herself', 'hi', 'hasn', 'they', 'should', 'for', 'himself', 'over', 'such', 'more', 'out', 've', 'while', 'ourselv', 'where', 'he', 'it', 'same', 'further', 'couldn', 'myself', 'again', 'are', 'both', 'after', 'befor', 'with', 'be', 'which', 'all', 'no', 'by', 'me', 'm', 'ha', 'that', 'these', 'of', 'to', 'each', 'into', 'wouldn', 'than', 'shouldn', 'were', 'what', 'would', 'shan', 'wa', 'i', 'did', 'from', 'him', 'the', 'onli', 'do', 'isn', 'there', 'ought', 'won', 'if', 'is', 'been', 'your', 'had', 'so', 'when', 'not', 's', 'becaus', 'itself', 'my', 'some', 'thi', 'd', 'themselv', 'then', 'doesn', 'can', 'against', 'haven', 'how', 'nor', 'didn', 'down', 'veri', 'you', 'mustn', 'yourselv', 'let', 'we', 'an', 'them', 'own', 'through', 'onc', 'between', 'whi', 'cannot', 'ani', 'could', 'on', 'those', 'their', 'up', 'at', 'or', 'as', 'off', 'don', 'other', 'below', 'here', 'dure', 'who', 'in', 'whom', 're', 'but', 'have', 'her', 'too', 'abov', 'until', 'a', 'under', 'wasn', 'weren', 'doe', 'our', 'few', 'yourself', 'most', 'll', 'about'}
 
     # Ask user for queries
     while True:
         query = input('Enter a query: ')
         numberOfLink = int(input('Enter the number of link you want to see: '))
         start_time = time.perf_counter()
+
         tokens = indexcreation.tokenize(query)
         # do we process tokens in user queries ? (i.e. stemming)
         # retrieve postings lists of each token and do an AND query for them
         query_freq = indexcreation.processWordInformation(tokens)
 
+        # remove common stopwords from query, unless there is only stopwords in the query
+        for token in tokens:
+            if len(query_freq) > 1 and token in sw and token in query_freq:
+                query_freq.pop(token)
+
         # get idf score for query terms, remove low idf terms
         idf_scores = {}
         query_scores = {}
         postings_lists = {}
+
+        
         for token in query_freq:
             postings_lists[token] = get_Postings(bk_dict, token, inv_index_f)
             idf_scores[token] = getIdf(len(postings_lists[token]), len(url_map))
@@ -126,20 +141,18 @@ if __name__ == '__main__':
                 else:
                     document_scores[posting.doc_id] = document_normalize*query_normalized[token]
 
+        
         # sort document_scores by value and return top k results 
         sdoc_scores = sorted(document_scores.items(), key = lambda d: d[1], reverse=True)
         sdoc_scores = sdoc_scores[:numberOfLink]
 
         end_time = time.perf_counter()
-
         print(f"Query time: {end_time-start_time:0.4f} seconds")
 
+        if len(sdoc_scores) < 1:
+            print("No matching results.")
         for doc_id, score in sdoc_scores:
             print(url_map[doc_id])
-
-
-            
-                    
 
         # valid_documents = set()
         # i = 1

@@ -1,0 +1,30 @@
+Good Queries:
+machine learning
+alex thornton
+richard pattis
+ICS 33
+visual studio code
+windows 11
+linux shell
+operating systems assembly language
+locate ics department
+fortnite
+
+Bad Queries:
+donald bren school of ics
+how is the weather today
+the graduation requirement for 2022
+beast attacked student to death
+information retrieval systems
+policy on covid 19 2022
+eating chickfila during class
+the largest database
+how to clear prerequisites
+are students allowed to drink on campus
+
+How We Improved:
+
+- The biggest bottleneck to our search engine’s performance was the retrieval of postings lists for common stopwords such as ‘to’, ‘of’, ‘and’, etc…  To improve this bottleneck, we decided to remove common stopwords from our queries, unless the query only contained stopwords.
+- To get a better search for our queries, we decided not to use the AND boolean query and ranked the documents based on the tf-idf score we got. We decided to do the cosine similarity ranking system which is more efficient and gives us a better corresponding link to the query that we are looking for.
+- To speed up query times, we computed the normalized tf score for terms in our documents at index-creation time instead of query time.  We were able to store the normalized tf-scores in our inverted_index file postings to avoid this computation at query time.
+- To improve search results, we created a proper word-weighting scheme for document terms, taking into consideration whether the term was bold, a title, header, etc...  This weighting is reflected in our tf score calculation.
