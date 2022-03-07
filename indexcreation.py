@@ -62,17 +62,6 @@ def getNormalize(tfScores):
 
     return normalized_scores
 
-# def addtoInvertedIndex(tokenFreq, doc_id, inv_index, sig_freq):
-#     for token in tokenFreq:
-#         if token in sig_freq:
-#             p = Posting(doc_id, tokenFreq[token], sig_freq[token])
-#         else:
-#             p = Posting(doc_id, tokenFreq[token], 0)
-#         if token in inv_index:
-#             inv_index[token].append(p)
-#         else:
-#             inv_index[token] = [p]
-
 def addtoInvertedIndex(doc_id, inv_index, normalize_score):
     for token in normalize_score:
         p = Posting(doc_id,normalize_score[token])
