@@ -154,6 +154,8 @@ if __name__ == '__main__':
         for doc_id, score in sdoc_scores:
             print(url_map[doc_id])
 
+    # Code below is for AND Boolean Queries
+
         # valid_documents = set()
         # i = 1
         # if len(tokens) == 1:
